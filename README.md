@@ -1,2 +1,3 @@
 # ApproxMVC
-Algorithms to find an approximate minimum vertex cover of a graph
+Algorithms to find an approximate minimum vertex cover of a graph.
+Current Algorithms Implemented:

@@ -1,9 +1,155 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h> 
+#include <stdint.h>
+
 #include "algorithms/maximal_matching/maximal_matching.h"
 #include "algorithms/pitts/pitts.h"
 
-int main(void){
-    maximal_matching();
-    pitts();
+
+// Helper functions
+char* ask(char* buffer, size_t buffer_size, char* message);
+int get_algorithm_id(char buffer[], size_t buffer_size);
+int prompt_for_alg();
+bool file_exists(char *path);
+void prompt_for_edges_filepath(char* filepath, size_t filepath_size);
+
+// Constants (only accessible by this file)
+#define max_num_characters 100
+#define maximal_matching_id 1 
+#define pitts_id 100
+#define incorrect_alg_id 0
+
+
+
+int main(int argc, char *argv[]){
+
+    // Get algorithm and edges filepath
+    int algorithm_id;
+    char edges_filepath[max_num_characters];
+    switch(argc){
+        case 1:
+            //Manual Entry Format
+            algorithm_id = prompt_for_alg(); //Prompt for Algorithm
+            prompt_for_edges_filepath(edges_filepath,sizeof(edges_filepath)); // prompt for edges filepath
+            break;
+        case 3:
+            algorithm_id = get_algorithm_id(argv[1],sizeof(argv[1])); // get algorithm
+            strcpy(edges_filepath, argv[2]);
+            if(algorithm_id != incorrect_alg_id && file_exists(edges_filepath)){
+                break;
+            }else{
+                //ERROR OCCURED
+                return EXIT_FAILURE;
+            }
+            
+        default:
+            printf("Incorrect Format. Please run the program as: \n");
+            printf("./approxmvc alg_name edges_filepath \n");
+            printf("or for manual entry \n");
+            printf("./approxmvc");
+            return EXIT_FAILURE;
+    }
+
+    printf("Edges filepath %s\n",edges_filepath);
+    // TODO: Load Edges Into memory
+    uint64_t* edges_ptr = NULL; //TODO: Point to first node of first edge in the array
+    switch(algorithm_id){
+        case maximal_matching_id:
+            maximal_matching(edges_ptr);
+            break;
+        case pitts_id:
+            pitts(edges_ptr);
+            break;
+        default:
+            break;
+    }
+
     return 0;
 }
+
+
+/////////////////////////////
+// ASK USER AND GET ANSWER //
+/////////////////////////////
+
+char* ask(char* buffer, size_t buffer_size, char* message){
+    printf("%s",message);
+    char* result = fgets(buffer, buffer_size, stdin); //Get user input
+    //strip result of the ending newline
+    if(result !=NULL){
+        // Find \n and replace it with \0
+        buffer[strcspn(buffer, "\r\n")] = 0;
+    }
+    return result;
+}
+
+
+
+/////////////////////////
+/// GETTING ALGORITHM ///
+/////////////////////////
+
+// returns integer id of algorithm to be used. 
+int get_algorithm_id(char buffer[], size_t buffer_size){
+    if (strcmp(buffer, "maximal_matching") == 0){
+        return maximal_matching_id;
+    }else if(strcmp(buffer, "pitts") == 0){
+        return pitts_id;
+    }
+    
+    printf("Incorrect Algorithm name. Possible values are:\n");
+    printf("maximal_matching\n");
+    printf("pitts\n");
+    return incorrect_alg_id; //incorrect / could not find
+}
+
+
+int prompt_for_alg(){
+    int algorithm_id = incorrect_alg_id;
+    char alg_name[max_num_characters+1];
+    bool is_first_loop = true;
+    while(algorithm_id == incorrect_alg_id){
+        if(!is_first_loop){
+            printf("\n");
+        }
+        ask(alg_name,sizeof(alg_name),"Enter The name of algorithm: ");
+        algorithm_id = get_algorithm_id(alg_name,sizeof(alg_name));
+        is_first_loop = false;
+    }
+    return algorithm_id;
+}
+
+
+
+
+////////////////////////////
+// GETTING EDGES FILEPATH //
+////////////////////////////
+
+bool file_exists(char *path) {
+    FILE *file = fopen(path, "r");
+    if (file) {
+        fclose(file);
+        return true;
+    }
+    printf("File does not exist\n");
+    return false;
+}
+
+void prompt_for_edges_filepath(char* filepath, size_t filepath_size){
+    bool is_file_valid = false;
+    while(!is_file_valid){
+        ask(filepath,filepath_size,"Enter Edges Filepath: ");
+        is_file_valid = file_exists(filepath);
+    }
+    return;
+}
+
+
+
+/////////////////
+// EDGES ARRAY //
+/////////////////
+

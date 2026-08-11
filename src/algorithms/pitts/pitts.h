@@ -1,1 +1,1 @@
-void pitts(uint64_t* edges_ptr);
+void pitts(void* edges_ptr);

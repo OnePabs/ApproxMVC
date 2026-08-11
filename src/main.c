@@ -3,6 +3,10 @@
 #include <string.h>
 #include <stdbool.h> 
 #include <stdint.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 #include "algorithms/maximal_matching/maximal_matching.h"
 #include "algorithms/pitts/pitts.h"
@@ -39,22 +43,51 @@ int main(int argc, char *argv[]){
             strcpy(edges_filepath, argv[2]);
             if(algorithm_id != incorrect_alg_id && file_exists(edges_filepath)){
                 break;
-            }else{
-                //ERROR OCCURED
-                return EXIT_FAILURE;
             }
             
         default:
-            printf("Incorrect Format. Please run the program as: \n");
-            printf("./approxmvc alg_name edges_filepath \n");
-            printf("or for manual entry \n");
-            printf("./approxmvc");
+            perror("Incorrect Form#include <sys/mman.h>at. Please run the program as: \n");
+            perror("./approxmvc alg_name edges_filepath \n");
+            perror("or for manual entry \n");
+            perror("./approxmvc");
             return EXIT_FAILURE;
     }
-
     printf("Edges filepath %s\n",edges_filepath);
-    // TODO: Load Edges Into memory
-    uint64_t* edges_ptr = NULL; //TODO: Point to first node of first edge in the array
+
+    //
+    // Load Edges file into memory
+    //
+    //open file
+    int fd = open(edges_filepath,O_RDONLY);
+    if (fd == -1) {
+        perror("Error opening file");
+        return EXIT_FAILURE;
+    }
+    //get file size
+    struct stat file_status;
+    if (fstat(fd, &file_status) == -1) {
+        perror("Error getting file stats");
+        close(fd);
+        return 1;
+    }
+    off_t file_size = file_status.st_size;
+    if ((uint64_t)file_size > SIZE_MAX) { //check if conversion to size_t is possible (yes in 64 bit systems, no otherwise)
+        perror("File is too large to fit into memory address space\n");
+        return EXIT_FAILURE;
+    }
+    size_t map_len = (size_t)file_size; //convert to size_t, needed for mmap call
+    //  create a new mapping in the virtual address space of this calling process to access the edges file
+    void* edges_ptr = mmap(NULL,map_len,PROT_READ,MAP_SHARED,fd,0);
+    close(fd);// clean up file descriptor
+    if(edges_ptr == MAP_FAILED){
+        perror("Could create a new mapping in virtual address space for edges file ");
+        return EXIT_FAILURE;
+    }
+    //TEST read edges file
+    char* edges_txt_ptr = (char*) edges_ptr;
+    printf("%s",edges_txt_ptr);
+
+    // Run appropriate algorithm
     switch(algorithm_id){
         case maximal_matching_id:
             maximal_matching(edges_ptr);

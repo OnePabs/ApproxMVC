@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
             }
             
         default:
-            perror("Incorrect Form#include <sys/mman.h>at. Please run the program as: \n");
+            perror("Incorrect Form. Please run the program as: \n");
             perror("./approxmvc alg_name edges_filepath \n");
             perror("or for manual entry \n");
             perror("./approxmvc");

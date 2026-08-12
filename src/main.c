@@ -84,8 +84,8 @@ int main(int argc, char *argv[]){
         return EXIT_FAILURE;
     }
     //TEST read edges file
-    char* edges_txt_ptr = (char*) edges_ptr;
-    printf("%s",edges_txt_ptr);
+    // char* edges_txt_ptr = (char*) edges_ptr;
+    // printf("%s",edges_txt_ptr);
 
     // Run appropriate algorithm
     switch(algorithm_id){
@@ -179,10 +179,4 @@ void prompt_for_edges_filepath(char* filepath, size_t filepath_size){
     }
     return;
 }
-
-
-
-/////////////////
-// EDGES ARRAY //
-/////////////////
 

@@ -13,17 +13,16 @@
 #include "algorithms/maximal_matching/maximal_matching.h"
 #include "algorithms/pitts/pitts.h"
 
+////////////////////////
+// LP64 COMPLIANT //
+////////////////////
+// This will fail compile-time if any condition is unmet
+_Static_assert(sizeof(int) == 4, "Error: int must be 32-bit");
+_Static_assert(sizeof(long) == 8, "Error: long must be 64-bit");
+_Static_assert(sizeof(void*) == 8, "Error: pointers must be 64-bit");
+_Static_assert(CHAR_BIT == 8, "Error: bytes must be 8-bit");
 
-////////////////////////////////
-// ENSURE 64 BIT ARCHITECTURE //
-////////////////////////////////
-#if INTPTR_MAX == INT64_MAX
-    // System is 64-bit
-#elif INTPTR_MAX == INT32_MAX
-    #error "This is a 32-bit system! 64-bit is required."
-#else
-    #error "Unknown architecture size."
-#endif
+
 
 //////////////////////////////////////////////
 // Constants (only accessible by this file) //
@@ -44,6 +43,7 @@ bool file_exists(char *path);
 void prompt_for_edges_filepath(char* filepath, size_t filepath_size);
 long parseLongBase10(const char *str);
 long prompt_num_nodes(void);
+long prompt_num_edges(void);
 
 //////////
 // MAIN //
@@ -54,6 +54,7 @@ int main(int argc, char *argv[]){
     int algorithm_id;
     char edges_filepath[max_num_characters];
     long num_nodes;
+    long num_edges;
     switch(argc){
         case 1:
             //Manual Entry Format
@@ -61,16 +62,17 @@ int main(int argc, char *argv[]){
             prompt_for_edges_filepath(edges_filepath,sizeof(edges_filepath)); // prompt for edges filepath
             num_nodes = prompt_num_nodes();
             break;
-        case 4:
+        case 5:
             algorithm_id = get_algorithm_id(argv[1],sizeof(argv[1])); // get algorithm
             strcpy(edges_filepath, argv[2]);
             num_nodes = parseLongBase10(argv[3]);
-            if(algorithm_id != incorrect_alg_id && file_exists(edges_filepath) && num_nodes > 0){
+            num_edges = parseLongBase10(argv[4]);
+            if(algorithm_id != incorrect_alg_id && file_exists(edges_filepath) && num_nodes > 0 && num_edges > 0){
                 break;
             }
             
         default:
-            fprintf(stderr, "You are running the program incorrectly. Please run the program as: ./approxmvc alg_name edges_filepath number_of_nodes\n");
+            fprintf(stderr, "You are running the program incorrectly. Please run the program as: ./approxmvc alg_name edges_filepath num_nodes num_edges\n");
             fprintf(stderr, "or without arguments for manual entry \n");
             return EXIT_FAILURE;
     }
@@ -116,14 +118,15 @@ int main(int argc, char *argv[]){
     // printf("%s",edges_txt_ptr);
 
     
+    uint64_t *uint64_edges_ptr = (uint64_t *)edges_ptr;
 
     // Run appropriate algorithm
     switch(algorithm_id){
         case maximal_matching_id:
-            maximal_matching(edges_ptr, num_nodes);
+            maximal_matching(uint64_edges_ptr, num_nodes, num_edges);
             break;
         case pitts_id:
-            pitts(edges_ptr, num_nodes);
+            pitts(uint64_edges_ptr, num_nodes, num_edges);
             break;
         default:
             break;
@@ -252,4 +255,14 @@ long prompt_num_nodes(void){
         num_nodes = parseLongBase10(buffer);
     }
     return num_nodes;
+}
+
+long prompt_num_edges(void){
+    char buffer[max_num_characters+1];
+    long num_edges = 0;
+    while(num_edges == 0){
+        ask(buffer,sizeof(buffer),"Enter number of edges (must be greater than zero): ");
+        num_edges = parseLongBase10(buffer);
+    }
+    return num_edges;
 }

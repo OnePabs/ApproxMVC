@@ -1,1 +1,1 @@
-void pitts(void* edges_ptr, long num_nodes);
+void pitts(uint64_t* edges_ptr, long num_nodes, long num_edges);

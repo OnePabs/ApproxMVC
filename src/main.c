@@ -12,21 +12,39 @@
 #include "algorithms/pitts/pitts.h"
 
 
-// Helper functions
-char* ask(char* buffer, size_t buffer_size, char* message);
-int get_algorithm_id(char buffer[], size_t buffer_size);
-int prompt_for_alg();
-bool file_exists(char *path);
-void prompt_for_edges_filepath(char* filepath, size_t filepath_size);
+////////////////////////////////
+// ENSURE 64 BIT ARCHITECTURE //
+////////////////////////////////
+#include <stdint.h>
+#if INTPTR_MAX == INT64_MAX
+    // System is 64-bit
+#elif INTPTR_MAX == INT32_MAX
+    #error "This is a 32-bit system! 64-bit is required."
+#else
+    #error "Unknown architecture size."
+#endif
 
-// Constants (only accessible by this file)
+//////////////////////////////////////////////
+// Constants (only accessible by this file) //
+//////////////////////////////////////////////
 #define max_num_characters 100
 #define maximal_matching_id 1 
 #define pitts_id 100
 #define incorrect_alg_id 0
 
 
+//////////////////////
+// Helper functions //
+//////////////////////
+char* ask(char* buffer, size_t buffer_size, char* message);
+int get_algorithm_id(char buffer[], size_t buffer_size);
+int prompt_for_alg();
+bool file_exists(char *path);
+void prompt_for_edges_filepath(char* filepath, size_t filepath_size);
 
+//////////
+// MAIN //
+//////////
 int main(int argc, char *argv[]){
 
     // Get algorithm and edges filepath
@@ -120,9 +138,9 @@ char* ask(char* buffer, size_t buffer_size, char* message){
 
 
 
-/////////////////////////
-/// GETTING ALGORITHM ///
-/////////////////////////
+/////////////////////////////////
+/// GETTING ALGORITHM NAME/ID ///
+/////////////////////////////////
 
 // returns integer id of algorithm to be used. 
 int get_algorithm_id(char buffer[], size_t buffer_size){

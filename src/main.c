@@ -7,6 +7,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <errno.h>
+#include <limits.h>
 
 #include "algorithms/maximal_matching/maximal_matching.h"
 #include "algorithms/pitts/pitts.h"
@@ -15,7 +17,6 @@
 ////////////////////////////////
 // ENSURE 64 BIT ARCHITECTURE //
 ////////////////////////////////
-#include <stdint.h>
 #if INTPTR_MAX == INT64_MAX
     // System is 64-bit
 #elif INTPTR_MAX == INT32_MAX
@@ -41,6 +42,8 @@ int get_algorithm_id(char buffer[], size_t buffer_size);
 int prompt_for_alg();
 bool file_exists(char *path);
 void prompt_for_edges_filepath(char* filepath, size_t filepath_size);
+long parseLongBase10(const char *str);
+long prompt_num_nodes(void);
 
 //////////
 // MAIN //
@@ -50,27 +53,27 @@ int main(int argc, char *argv[]){
     // Get algorithm and edges filepath
     int algorithm_id;
     char edges_filepath[max_num_characters];
+    long num_nodes;
     switch(argc){
         case 1:
             //Manual Entry Format
             algorithm_id = prompt_for_alg(); //Prompt for Algorithm
             prompt_for_edges_filepath(edges_filepath,sizeof(edges_filepath)); // prompt for edges filepath
+            num_nodes = prompt_num_nodes();
             break;
-        case 3:
+        case 4:
             algorithm_id = get_algorithm_id(argv[1],sizeof(argv[1])); // get algorithm
             strcpy(edges_filepath, argv[2]);
-            if(algorithm_id != incorrect_alg_id && file_exists(edges_filepath)){
+            num_nodes = parseLongBase10(argv[3]);
+            if(algorithm_id != incorrect_alg_id && file_exists(edges_filepath) && num_nodes > 0){
                 break;
             }
             
         default:
-            perror("Incorrect Form. Please run the program as: \n");
-            perror("./approxmvc alg_name edges_filepath \n");
-            perror("or for manual entry \n");
-            perror("./approxmvc");
+            fprintf(stderr, "You are running the program incorrectly. Please run the program as: ./approxmvc alg_name edges_filepath number_of_nodes\n");
+            fprintf(stderr, "or without arguments for manual entry \n");
             return EXIT_FAILURE;
     }
-    printf("Edges filepath %s\n",edges_filepath);
 
     //
     // Load Edges file into memory
@@ -78,19 +81,19 @@ int main(int argc, char *argv[]){
     //open file
     int fd = open(edges_filepath,O_RDONLY);
     if (fd == -1) {
-        perror("Error opening file");
+        fprintf(stderr, "Error opening file");
         return EXIT_FAILURE;
     }
     //get file size
     struct stat file_status;
     if (fstat(fd, &file_status) == -1) {
-        perror("Error getting file stats");
+        fprintf(stderr, "Error getting file stats");
         close(fd);
         return 1;
     }
     off_t file_size = file_status.st_size;
     if ((uint64_t)file_size > SIZE_MAX) { //check if conversion to size_t is possible (yes in 64 bit systems, no otherwise)
-        perror("File is too large to fit into memory address space\n");
+        fprintf(stderr, "File is too large to fit into memory address space\n");
         return EXIT_FAILURE;
     }
     size_t map_len = (size_t)file_size; //convert to size_t, needed for mmap call
@@ -98,20 +101,29 @@ int main(int argc, char *argv[]){
     void* edges_ptr = mmap(NULL,map_len,PROT_READ,MAP_SHARED,fd,0);
     close(fd);// clean up file descriptor
     if(edges_ptr == MAP_FAILED){
-        perror("Could create a new mapping in virtual address space for edges file ");
+        fprintf(stderr, "Could create a new mapping in virtual address space for edges file ");
         return EXIT_FAILURE;
     }
-    //TEST read edges file
+
+    //TEST
+    // printf("---------\n");
+    // printf("TEST\n");
+    // printf("Number of nodes: %lu\n", num_nodes);
+    // printf("Edges filepath: %s\n", edges_filepath);
+    // printf("Algorithm ID: %d\n", algorithm_id);
+    //// Read all edges
     // char* edges_txt_ptr = (char*) edges_ptr;
     // printf("%s",edges_txt_ptr);
+
+    
 
     // Run appropriate algorithm
     switch(algorithm_id){
         case maximal_matching_id:
-            maximal_matching(edges_ptr);
+            maximal_matching(edges_ptr, num_nodes);
             break;
         case pitts_id:
-            pitts(edges_ptr);
+            pitts(edges_ptr, num_nodes);
             break;
         default:
             break;
@@ -198,3 +210,46 @@ void prompt_for_edges_filepath(char* filepath, size_t filepath_size){
     return;
 }
 
+
+///////////////////////
+// GETTING NUM NODES //
+///////////////////////
+long parseLongBase10(const char *str){
+    if(str==NULL){
+        fprintf(stderr, "parseLong: pointer to string to parse is NULL\n");
+        return 0;
+    }else if(*str == '\0'){
+        fprintf(stderr, "parseLong: string to parse is NULL (empty)\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    char* temp;
+    char** endptr = &temp;
+    long result = strtol(str,endptr,10);
+    
+    if(str==*endptr){
+        fprintf(stderr,"parseLongBase10: string to parse has no digits at all\n");
+        return 0;
+    }else if(**endptr!='\0'){
+        fprintf(stderr, "parseLongBase10: string to parse contains some non-digit characters starting with: %c\n", **endptr);
+        return 0;
+    }else if(errno == ERANGE){
+        if(result == LONG_MIN){
+            fprintf(stderr, "parseLongBase10: UNDERFLOW\n");
+        }else if(errno == LONG_MAX){
+           fprintf(stderr, "parseLongBase10: OVERFLOW\n");
+        }
+        return 0;
+    }
+    return result;
+}
+
+long prompt_num_nodes(void){
+    char buffer[max_num_characters+1];
+    long num_nodes = 0;
+    while(num_nodes == 0){
+        ask(buffer,sizeof(buffer),"Enter number of nodes (must be greater than zero): ");
+        num_nodes = parseLongBase10(buffer);
+    }
+    return num_nodes;
+}

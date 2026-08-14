@@ -6,9 +6,6 @@
 void maximal_matching(uint64_t* edges_ptr, uint32_t* cover_ptr, uint64_t num_nodes, uint64_t num_edges){
     printf("Maximal Matching algorithm\n");
 
-    // create cover boolan array
-    //uint32_t* cover_boolean_int_arr_ptr = create_cover_boolean_arr(num_nodes);
-
     // Go through each edge
     for(uint64_t i=0; i<num_edges*2; i=i+2){
         // check if node 1 is covered
@@ -23,9 +20,4 @@ void maximal_matching(uint64_t* edges_ptr, uint32_t* cover_ptr, uint64_t num_nod
             }
         }
     }
-
-    // print the nodes in the cover
-    //print_nodes_in_cover(num_nodes,cover_boolean_int_arr_ptr);
-
-    
 }

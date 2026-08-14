@@ -4,17 +4,26 @@
 #include <stdbool.h>
 
 int is_node_in_cover(long node_id, int* cover_boolean_int_arr_ptr){
+    //printf("is_node_in_cover %lu\n",node_id);
     long offset_in_array = node_id >> 5;
-    long offset_in_byte = node_id & 0x31UL;
-    return cover_boolean_int_arr_ptr[offset_in_array] & (1UL << offset_in_byte);
+    //printf("offset_in_array %lu\n",offset_in_array);
+    long offset_in_int = node_id - ((node_id >> 5)<<5); // remainder r of node_id = m(2^5) + r
+    //printf("offset_in_int %lu\n",offset_in_int);
+    int is_it = cover_boolean_int_arr_ptr[offset_in_array] & (1UL << offset_in_int);
+    //printf("is_it %lu\n",is_it);
+    return is_it;
 
 }
 
 void add_node_to_cover(long node_id, int* cover_boolean_int_arr_ptr){
+    //printf("add_node_to_cover %lu\n",node_id);
     long offset_in_array = node_id >> 5;
-    long offset_in_byte = node_id & 0x31UL;
-    cover_boolean_int_arr_ptr[offset_in_array] = cover_boolean_int_arr_ptr[offset_in_array] | (1UL << offset_in_byte);
+    //printf("offset_in_array %lu\n",offset_in_array);
+    long offset_in_int = node_id - ((node_id >> 5)<<5); // remainder r of node_id = m(2^5) + r
+    //printf("offset_in_int %lu\n",offset_in_int);
+    cover_boolean_int_arr_ptr[offset_in_array] = cover_boolean_int_arr_ptr[offset_in_array] | (1UL << offset_in_int);
 }
+
 
 
 
@@ -30,6 +39,7 @@ void maximal_matching(uint64_t* edges_ptr, long num_nodes, long num_edges){
     // we will access the boolean array values in sets of 32, 
     // represented by an integer
     size_t num_int_entries_needed = (num_nodes+31) >> 5; // take the ceiling of dividing num_nodes by 8
+    printf("num_int_entries_needed %lu\n",num_int_entries_needed);
     size_t bytes_needed = num_int_entries_needed*4;
 
     // create the array of booleans 
@@ -39,11 +49,8 @@ void maximal_matching(uint64_t* edges_ptr, long num_nodes, long num_edges){
     // Convert to int array to access in chuncks of 32
     int* cover_boolean_int_arr_ptr = (int*)cover_boolean_arr_ptr;
 
-
-    // Go through each edge (node1,node2)
-
+    // Go through each edge
     for(long i=0; i<num_edges*2; i=i+2){
-
         // check if node 1 is covered
         if(!is_node_in_cover(edges_ptr[i],cover_boolean_int_arr_ptr)){
             // node1  is not in cover
@@ -55,8 +62,33 @@ void maximal_matching(uint64_t* edges_ptr, long num_nodes, long num_edges){
                 add_node_to_cover(edges_ptr[i+1],cover_boolean_int_arr_ptr);
             }
         }
-        
-        printf("edge %lu = (%lu,%lu)\n",edge_num, edges_ptr[i],  edges_ptr[i+1]);
+    }
+
+    // print the nodes in the cover
+    printf("\nPrinting nodes in cover...\n");
+    int is_in_cover = 0;
+    long node_id = 0;
+    for(size_t i=0;i<num_int_entries_needed;i++){
+        printf("i: %lu\n",i);
+        size_t num_id_base = i*32;
+        printf("num_id_base %lu\n", num_id_base);
+        size_t nodes_remaining = num_nodes - num_id_base;
+        printf("nodes_remaining %lu\n", nodes_remaining);
+        size_t max_offset = (nodes_remaining >= 32) ? 31:nodes_remaining-1;
+        printf("max_offset %lu\n", max_offset);
+        for(int offset_in_int = 0; offset_in_int <= max_offset; offset_in_int++){
+            printf("offset_in_int %d\n", offset_in_int);
+            node_id = num_id_base + offset_in_int; 
+            printf("node_id %lu\n", node_id);
+            is_in_cover = (cover_boolean_int_arr_ptr[i] >> offset_in_int) & 1;
+            if(is_in_cover != 0){
+                // node is in cover
+                printf("node %ld is in cover \n",node_id);
+            }else{
+                // node is not in cover
+                printf("node %ld is NOT in cover \n",node_id);
+            }
+        }
     }
 
 

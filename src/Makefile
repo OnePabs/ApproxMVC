@@ -6,9 +6,10 @@ CFLAGS = -Wall -Wextra
 TARGET = approxmvc
 
 # Source and object files
+HELPERS_SRCS = algorithms/helpers.c
 MAXIMAL_MATCHING_SRCS = algorithms/maximal_matching/maximal_matching.c
 PITTS_SRCS = algorithms/pitts/pitts.c
-SRCS = main.c $(MAXIMAL_MATCHING_SRCS) $(PITTS_SRCS)
+SRCS = main.c $(MAXIMAL_MATCHING_SRCS) $(PITTS_SRCS) $(HELPERS_SRCS)
 OBJS = $(SRCS:.c=.o)
 
 # Default rule

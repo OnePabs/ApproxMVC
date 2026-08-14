@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h> 
 #include "../helpers.h"
 
 
-void maximal_matching(uint64_t* edges_ptr, long num_nodes, long num_edges){
+void maximal_matching(uint64_t* edges_ptr, uint64_t num_nodes, uint64_t num_edges){
     printf("Maximal Matching algorithm\n");
 
     // create cover boolan array
-    int* cover_boolean_int_arr_ptr = create_cover_boolean_arr(num_nodes);
+    uint32_t* cover_boolean_int_arr_ptr = create_cover_boolean_arr(num_nodes);
 
     // Go through each edge
-    for(long i=0; i<num_edges*2; i=i+2){
+    for(uint64_t i=0; i<num_edges*2; i=i+2){
         // check if node 1 is covered
         if(!is_node_in_cover(edges_ptr[i],cover_boolean_int_arr_ptr)){
             // node1  is not in cover

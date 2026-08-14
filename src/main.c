@@ -36,14 +36,14 @@ _Static_assert(CHAR_BIT == 8, "Error: bytes must be 8-bit");
 //////////////////////
 // Helper functions //
 //////////////////////
-char* ask(char* buffer, size_t buffer_size, char* message);
-int get_algorithm_id(char buffer[], size_t buffer_size);
+char* ask(char* buffer, int buffer_size, char* message);
+int get_algorithm_id(char buffer[], int buffer_size);
 int prompt_for_alg();
 bool file_exists(char *path);
-void prompt_for_edges_filepath(char* filepath, size_t filepath_size);
-long parseLongBase10(const char *str);
-long prompt_num_nodes(void);
-long prompt_num_edges(void);
+void prompt_for_edges_filepath(char* filepath, int filepath_size);
+uint64_t parseUint64Base10(const char *str);
+uint64_t prompt_num_nodes(void);
+uint64_t prompt_num_edges(void);
 
 //////////
 // MAIN //
@@ -53,8 +53,8 @@ int main(int argc, char *argv[]){
     // Get algorithm and edges filepath
     int algorithm_id;
     char edges_filepath[max_num_characters];
-    long num_nodes;
-    long num_edges;
+    uint64_t num_nodes;
+    uint64_t num_edges;
     switch(argc){
         case 1:
             //Manual Entry Format
@@ -65,8 +65,8 @@ int main(int argc, char *argv[]){
         case 5:
             algorithm_id = get_algorithm_id(argv[1],sizeof(argv[1])); // get algorithm
             strcpy(edges_filepath, argv[2]);
-            num_nodes = parseLongBase10(argv[3]);
-            num_edges = parseLongBase10(argv[4]);
+            num_nodes = parseUint64Base10(argv[3]);
+            num_edges = parseUint64Base10(argv[4]);
             if(algorithm_id != incorrect_alg_id && file_exists(edges_filepath) && num_nodes > 0 && num_edges > 0){
                 break;
             }
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]){
 // ASK USER AND GET ANSWER //
 /////////////////////////////
 
-char* ask(char* buffer, size_t buffer_size, char* message){
+char* ask(char* buffer, int buffer_size, char* message){
     printf("%s",message);
     char* result = fgets(buffer, buffer_size, stdin); //Get user input
     //strip result of the ending newline
@@ -158,7 +158,7 @@ char* ask(char* buffer, size_t buffer_size, char* message){
 /////////////////////////////////
 
 // returns integer id of algorithm to be used. 
-int get_algorithm_id(char buffer[], size_t buffer_size){
+int get_algorithm_id(char buffer[], int buffer_size){
     if (strcmp(buffer, "maximal_matching") == 0){
         return maximal_matching_id;
     }else if(strcmp(buffer, "pitts") == 0){
@@ -204,7 +204,7 @@ bool file_exists(char *path) {
     return false;
 }
 
-void prompt_for_edges_filepath(char* filepath, size_t filepath_size){
+void prompt_for_edges_filepath(char* filepath, int filepath_size){
     bool is_file_valid = false;
     while(!is_file_valid){
         ask(filepath,filepath_size,"Enter Edges Filepath: ");
@@ -217,52 +217,60 @@ void prompt_for_edges_filepath(char* filepath, size_t filepath_size){
 ///////////////////////
 // GETTING NUM NODES //
 ///////////////////////
-long parseLongBase10(const char *str){
+uint64_t parseUint64Base10(const char *str){
     if(str==NULL){
-        fprintf(stderr, "parseLong: pointer to string to parse is NULL\n");
+        fprintf(stderr, "parseUint64Base10: pointer to string to parse is NULL\n");
         return 0;
     }else if(*str == '\0'){
-        fprintf(stderr, "parseLong: string to parse is NULL (empty)\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "parseUint64Base10: string to parse is NULL (empty)\n");
+        return 0;
     }
-    
+
+    // Reject negative sign inputs 
+    const char* str_temp = str;
+    while (*str_temp == ' ' || *str_temp == '\t') str_temp++; // Skip whitespace
+    if (*str == '-') {
+        //negative sign has been found
+        fprintf(stderr, "parseUint64Base10: Negatives are not allowed\n");
+        return 0;
+    }
+
+    // make conversion
     char* temp;
     char** endptr = &temp;
-    long result = strtol(str,endptr,10);
+    unsigned long result = strtoul(str,endptr,10);
     
+    // check for conversion errors
     if(str==*endptr){
-        fprintf(stderr,"parseLongBase10: string to parse has no digits at all\n");
+        fprintf(stderr,"parseUint64Base10: string to parse has no digits at all\n");
         return 0;
     }else if(**endptr!='\0'){
-        fprintf(stderr, "parseLongBase10: string to parse contains some non-digit characters starting with: %c\n", **endptr);
+        fprintf(stderr, "parseUint64Base10: string to parse contains some non-digit characters starting with: %c\n", **endptr);
         return 0;
-    }else if(errno == ERANGE){
-        if(result == LONG_MIN){
-            fprintf(stderr, "parseLongBase10: UNDERFLOW\n");
-        }else if(errno == LONG_MAX){
-           fprintf(stderr, "parseLongBase10: OVERFLOW\n");
-        }
+    }else if(errno == ERANGE && result == ULONG_MAX){
+        fprintf(stderr, "parseUint64Base10: OVERFLOW\n");
         return 0;
     }
-    return result;
+    uint64_t res_uint64 = (uint64_t)result;
+    return res_uint64;
 }
 
-long prompt_num_nodes(void){
+uint64_t prompt_num_nodes(void){
     char buffer[max_num_characters+1];
-    long num_nodes = 0;
+    uint64_t num_nodes = 0;
     while(num_nodes == 0){
         ask(buffer,sizeof(buffer),"Enter number of nodes (must be greater than zero): ");
-        num_nodes = parseLongBase10(buffer);
+        num_nodes = parseUint64Base10(buffer);
     }
     return num_nodes;
 }
 
-long prompt_num_edges(void){
+uint64_t prompt_num_edges(void){
     char buffer[max_num_characters+1];
-    long num_edges = 0;
+    uint64_t num_edges = 0;
     while(num_edges == 0){
         ask(buffer,sizeof(buffer),"Enter number of edges (must be greater than zero): ");
-        num_edges = parseLongBase10(buffer);
+        num_edges = parseUint64Base10(buffer);
     }
     return num_edges;
 }

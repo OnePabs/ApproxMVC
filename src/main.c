@@ -12,6 +12,7 @@
 
 #include "algorithms/maximal_matching/maximal_matching.h"
 #include "algorithms/pitts/pitts.h"
+#include "algorithms/helpers.h"
 
 ////////////////////////
 // LP64 COMPLIANT //
@@ -121,17 +122,20 @@ int main(int argc, char *argv[]){
     uint64_t *uint64_edges_ptr = (uint64_t *)edges_ptr;
 
     // Run appropriate algorithm
+    uint32_t* cover_ptr = create_cover_boolean_arr(num_nodes);
     switch(algorithm_id){
         case maximal_matching_id:
-            maximal_matching(uint64_edges_ptr, num_nodes, num_edges);
+            maximal_matching(uint64_edges_ptr, cover_ptr, num_nodes, num_edges);
             break;
         case pitts_id:
-            pitts(uint64_edges_ptr, num_nodes, num_edges);
+            pitts(uint64_edges_ptr, cover_ptr, num_nodes, num_edges);
             break;
         default:
             break;
     }
 
+    print_nodes_in_cover(num_nodes,cover_ptr);
+    
     return 0;
 }
 

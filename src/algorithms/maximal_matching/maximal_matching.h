@@ -1,1 +1,1 @@
-void maximal_matching(uint64_t* edges_ptr, uint64_t num_nodes, uint64_t num_edges);
+void maximal_matching(uint64_t* edges_ptr, uint32_t* cover_ptr, uint64_t num_nodes, uint64_t num_edges);
